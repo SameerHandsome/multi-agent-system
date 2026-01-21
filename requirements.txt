@@ -4,7 +4,7 @@ pydantic==2.5.3
 langgraph==0.0.26
 langchain-openai==0.0.5
 langchain-core>=0.1.25,<0.2.0
-langsmith==0.0.87
+langsmith>=0.1.0,<0.2.0
 python-dotenv==1.0.0
 requests==2.31.0
 httpx==0.26.0

@@ -44,6 +44,10 @@ jobs:
   # Job 2: Security Scanning
   security-scan:
     runs-on: ubuntu-latest
+    # FIX 1: Added permissions to allow SARIF upload
+    permissions:
+      security-events: write
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -57,7 +61,8 @@ jobs:
           output: 'trivy-results.sarif'
 
       - name: Upload Trivy results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
+        # FIX 2: Updated from v3 to v4 to avoid deprecation
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: 'trivy-results.sarif'
 
@@ -144,6 +149,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      security-events: write # Added for Trivy image scan upload
 
     steps:
       - name: Checkout code
@@ -190,7 +196,8 @@ jobs:
           output: 'trivy-image-results.sarif'
 
       - name: Upload Trivy image results
-        uses: github/codeql-action/upload-sarif@v3
+        # FIX 3: Updated from v3 to v4
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: 'trivy-image-results.sarif'
 
