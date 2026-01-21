@@ -1,0 +1,35 @@
+{
+  "timestamp": "2026-01-21T21:52:25.487766",
+  "results": [
+    {
+      "test_case": "What is the capital of France?",
+      "success": true,
+      "quality_score": 0.9,
+      "timestamp": "2026-01-21T21:49:14.836265"
+    },
+    {
+      "test_case": "Write a Python function to calculate factorial",
+      "success": true,
+      "quality_score": 0.95,
+      "timestamp": "2026-01-21T21:49:20.940110"
+    },
+    {
+      "test_case": "Research latest AI developments",
+      "success": true,
+      "quality_score": 0.92,
+      "timestamp": "2026-01-21T21:49:26.773647"
+    },
+    {
+      "test_case": "Create a simple calculator in Python",
+      "success": true,
+      "quality_score": 0.7,
+      "timestamp": "2026-01-21T21:49:45.741690"
+    },
+    {
+      "test_case": "Explain quantum computing",
+      "success": true,
+      "quality_score": 0.92,
+      "timestamp": "2026-01-21T21:50:03.601153"
+    }
+  ]
+}

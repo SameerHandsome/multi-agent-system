@@ -1,6 +1,5 @@
 """
-Multi-Agent System with LangGraph + Groq + Simple Tools
-Implements: Reflexion, Plan-and-Execute, Consensus, Safety Controls
+Multi-Agent System with LangSmith Tracing + FastAPI
 """
 
 import os
@@ -9,7 +8,7 @@ from langgraph.graph import StateGraph, END
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from langchain_core.tools import tool
-import asyncio
+from langsmith import traceable
 import json
 import requests
 from dotenv import load_dotenv
@@ -32,15 +31,7 @@ class AgentState(TypedDict):
 
 @tool
 def web_search(query: str) -> str:
-    """
-    Search the internet using Tavily API for current information.
-    
-    Args:
-        query: The search query string
-        
-    Returns:
-        Search results as formatted string
-    """
+    """Search the internet using Tavily API"""
     api_key = os.getenv("TAVILY_API_KEY")
     if not api_key:
         return "Error: TAVILY_API_KEY not set"
@@ -68,6 +59,7 @@ def web_search(query: str) -> str:
         return "\n\n".join(results) if results else "No results found"
     except Exception as e:
         return f"Search failed: {str(e)}"
+
 @tool
 def calculate(expression: str) -> str:
     """Evaluate mathematical expressions"""
@@ -87,12 +79,11 @@ def code_validator(code: str) -> dict:
         return {"valid": False, "message": f"Syntax error: {str(e)}"}
 
 
-
 llm = ChatOpenAI(
-        api_key=os.getenv("GROQ_API_KEY"),
-        base_url="https://api.groq.com/openai/v1",
-        model="llama-3.3-70b-versatile",
-        temperature=0
+    api_key=os.getenv("GROQ_API_KEY"),
+    base_url="https://api.groq.com/openai/v1",
+    model="llama-3.3-70b-versatile",
+    temperature=0
 )
 
 ORCHESTRATOR_PROMPT = """You are an Orchestrator Agent that decomposes tasks.
@@ -148,6 +139,7 @@ Return format:
 }"""
 
 
+@traceable(name="orchestrator_agent")
 def orchestrator_node(state: AgentState) -> AgentState:
     """Orchestrator: Creates execution plan"""
     print("\n🎯 ORCHESTRATOR: Planning...")
@@ -179,6 +171,8 @@ def orchestrator_node(state: AgentState) -> AgentState:
     print(f"📋 Plan: {len(plan.get('tasks', []))} tasks")
     return state
 
+
+@traceable(name="researcher_agent")
 def researcher_node(state: AgentState) -> AgentState:
     """Researcher: Gathers information using web search"""
     print("\n🔍 RESEARCHER: Searching...")
@@ -210,6 +204,8 @@ def researcher_node(state: AgentState) -> AgentState:
     print(f"✅ Research complete: {len(response.content)} chars")
     return state
 
+
+@traceable(name="coder_agent")
 def coder_node(state: AgentState) -> AgentState:
     """Coder: Writes code"""
     print("\n💻 CODER: Writing code...")
@@ -237,6 +233,8 @@ def coder_node(state: AgentState) -> AgentState:
     print(f"✅ Code written: {len(response.content)} chars")
     return state
 
+
+@traceable(name="critic_agent")
 def critic_node(state: AgentState) -> AgentState:
     """Critic: Reviews and scores output"""
     print("\n⭐ CRITIC: Reviewing...")
@@ -278,6 +276,8 @@ def critic_node(state: AgentState) -> AgentState:
     print(f"✅ Score: {score:.2f}")
     return state
 
+
+@traceable(name="final_aggregator")
 def final_node(state: AgentState) -> AgentState:
     """Aggregates final output"""
     print("\n🎉 FINALIZING...")
@@ -296,25 +296,20 @@ def final_node(state: AgentState) -> AgentState:
 
 
 def route_after_orchestrator(state: AgentState) -> str:
-    """Route to first agent in plan"""
     return state.get("next", "researcher")
 
 def route_after_researcher(state: AgentState) -> str:
-    """Route to coder or critic"""
     return state.get("next", "critic")
 
 def route_after_coder(state: AgentState) -> str:
-    """Route to critic"""
     return "critic"
 
 def route_after_critic(state: AgentState) -> str:
-    """Route to end or retry"""
     return state.get("next", "end")
 
 
 def create_graph():
     """Creates the LangGraph workflow"""
-    
     workflow = StateGraph(AgentState)
     
     workflow.add_node("orchestrator", orchestrator_node)
@@ -337,9 +332,9 @@ def create_graph():
     return workflow.compile()
 
 
+@traceable(name="run_multi_agent_system", run_type="chain")
 def run_agent_system(user_input: str):
     """Run the multi-agent system"""
-    
     initial_state = {
         "messages": [],
         "user_input": user_input,
@@ -368,9 +363,3 @@ def run_agent_system(user_input: str):
     print(result["final_output"])
     
     return result
-
-if __name__ == "__main__":
-    
-    user_query = "Research the latest developments in AI agents and write a Python example"
-    
-    run_agent_system(user_query)
