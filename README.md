@@ -112,7 +112,3 @@ source venv/bin/activate
 **API Error**: Check your `.env` file has both `GROQ_API_KEY` and `TAVILY_API_KEY`
 
 **No Search Results**: Verify Tavily API key is valid and has credits remaining
-
-## License
-
-MIT
